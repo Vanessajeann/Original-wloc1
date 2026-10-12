@@ -4,7 +4,8 @@
 公共解析服务：https://wloc-spoofer.31610766.workers.dev/api/parse
 
 网页已经有「储存到设备」和「恢复真实定位」入口。快捷指令是可选的地图分享入口。
-本仓库目前没有已发布的 iCloud 快捷指令链接；下列流程可以在维护者自己的 iPhone／iPad 上创建，再分享给访客。
+已发布 **[「WLOC 选点」快捷指令](https://www.icloud.com/shortcuts/3acda8b3d366475bb65fb04a664ce276)**，可一键打开公共选点网页；设置和恢复通过网页按钮完成。
+下列完整的「设置地理位置」「恢复真实定位」指令尚未发布 iCloud 链接，可以在维护者自己的 iPhone／iPad 上创建，再分享给访客。
 GitHub 仓库复制不会复制 iCloud 分享记录，Windows 上也不能直接执行 Apple 的快捷指令签名工具。
 
 ## 维护者创建「WLOC 设置地理位置」
@@ -46,7 +47,7 @@ GitHub 仓库复制不会复制 iCloud 分享记录，Windows 上也不能直接
 
 ## 可选的最简入口
 
-只想一键打开选点网页时，新建「WLOC 选点」：
+只想一键打开选点网页时，可直接 **[添加「WLOC 选点」](https://www.icloud.com/shortcuts/3acda8b3d366475bb65fb04a664ce276)**，或自行新建：
 「URL」填写 `https://wloc-spoofer.31610766.workers.dev/` → 「打开 URL」。
 这条指令只打开网页，设置和恢复由网页按钮完成。
 
