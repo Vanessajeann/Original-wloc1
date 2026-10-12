@@ -10,7 +10,7 @@
 
 1. 在 iPhone／iPad 安装并开启下列任一代理工具，订阅对应模块。
 2. 开启 MITM，安装该代理工具生成的 CA 证书，并在系统中信任它。MITM 主机名包含 `gs-loc.apple.com` 和 `gs-loc-cn.apple.com`。
-3. 在 Safari 打开 **[公共选点页面](https://wloc-spoofer.31610766.workers.dev/)**，可添加到主屏幕。普通用户无需注册 Cloudflare。
+3. 在 Safari 打开 **[公共选点页面](https://wloc-spoofer.31610766.workers.dev/)**，可添加到主屏幕；也可 **[添加「WLOC 选点」快捷指令](https://www.icloud.com/shortcuts/3acda8b3d366475bb65fb04a664ce276)** 一键打开。普通用户无需注册 Cloudflare。
 4. 点击地图、搜索地点或粘贴地图链接，点击「储存到设备」。
 5. 在地图 App 中验证位置。如果系统仍使用旧结果，可重新触发定位，必要时重启设备；以你的设备实际结果为准。
 
@@ -48,7 +48,9 @@ Egern 使用 Surge 模块。Stash 可直接订阅 `.stoverride`。
 
 解析失败时，请长按地图选点后重新分享，或输入坐标。网页与快捷指令共用同一解析接口。
 
-**[快捷指令创建与发布指南](docs/shortcut-guide.md)** 包含已填写公共服务地址的完整流程。本版本尚未发布可直接添加的 iCloud 分享链接；选点网页已经提供设置和恢复入口，无需创建快捷指令即可使用。维护者取得分享链接后，应在这里补上两条「添加快捷指令」入口。
+**[添加「WLOC 选点」快捷指令](https://www.icloud.com/shortcuts/3acda8b3d366475bb65fb04a664ce276)**：在 iPhone／iPad 打开链接并添加，运行后进入公共选点网页。此指令只打开网页；选择位置、储存到设备和恢复真实定位均通过网页按钮完成，仍需先完成模块、MITM 和证书配置。
+
+需要从地图分享菜单直接设置位置，或单独执行恢复时，可按 **[快捷指令创建与发布指南](docs/shortcut-guide.md)** 创建完整指令。这两条完整指令尚未发布 iCloud 分享链接。
 
 公共解析接口：
 
