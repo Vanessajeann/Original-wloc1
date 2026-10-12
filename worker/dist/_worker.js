@@ -619,9 +619,12 @@ async function searchPlace() {
 }
 
 document.addEventListener('paste', e => {
+  const input=document.getElementById('urlInput');
+  if (e.target !== input) return;
   const text = (e.clipboardData||window.clipboardData).getData('text');
-  if (text && (text.includes('map') || text.includes('loc') || text.includes('lnglat') || /[0-9]+\\.[0-9]+/.test(text))) {
-    document.getElementById('urlInput').value = text;
+  if (text) {
+    e.preventDefault();
+    input.value = text.trim();
     setTimeout(parseUrl, 200);
   }
 });

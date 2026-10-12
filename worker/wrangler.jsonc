@@ -2,5 +2,6 @@
   "name": "wloc-spoofer",
   "main": "src/index.js",
   "build": { "command": "node scripts/build.mjs" },
+  "preview_urls": true,
   "compatibility_date": "2025-10-01"
 }

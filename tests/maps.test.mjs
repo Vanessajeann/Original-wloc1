@@ -84,3 +84,18 @@ test('rendered webpage has valid script, backend parser and correct layer conver
   assert.ok(scripts.includes('gcj02ToWgs84(newLat,newLon)'));
   assert.ok(html.includes('设备已保存坐标'));
 });
+test('pasting a coordinate replaces it once and leaves other inputs alone',()=>{
+  const html=getPageHtml();
+  const handler=html.slice(html.indexOf("document.addEventListener('paste'"),html.indexOf("document.getElementById('searchInput').addEventListener"));
+  const input={value:''};
+  let listener,prevented=false,parsed=0;
+  const context=vm.createContext({document:{getElementById:()=>input,addEventListener(_,fn){listener=fn;}},setTimeout(fn){fn();},parseUrl(){parsed++;}});
+  vm.runInContext(handler,context);
+  const paste={target:input,clipboardData:{getData:()=> '0,-73.9'},preventDefault(){prevented=true;}};
+  listener(paste);
+  if(!prevented)input.value+='0,-73.9';
+  assert.equal(input.value,'0,-73.9');
+  assert.equal(parsed,1);
+  listener({...paste,target:{value:'收藏备注'}});
+  assert.equal(parsed,1);
+});
