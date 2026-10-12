@@ -1,40 +1,27 @@
-import { Hono } from "hono/tiny";
 import { getPageHtml } from "./page.js";
-import { parseCoords, gcj02ToWgs84, round6 } from "./parse.js";
+import { parseCoords, normalizeCoords } from "./parse.js";
 
-const app = new Hono();
+const API_HEADERS = {
+  "Content-Type":"application/json; charset=utf-8",
+  "Access-Control-Allow-Origin":"*",
+  "Access-Control-Allow-Methods":"GET, OPTIONS",
+  "Cache-Control":"no-store"
+};
 
-app.get("/", (c) => {
-  return c.html(getPageHtml());
-});
-
-// 地图链接解析: 供快捷指令调用。
-// GET /api/parse?u=<链接>&format=json&cs=<gcj|none>
-//   返回 {lat, lon, name}; 高德/苹果地图(中国大陆均为 GCJ-02)自动转 WGS84; 境外坐标自动跳过(out_of_china)。cs=none 可强制不转换。
-//   不带 format=json 时返回纯文本 "lat=..&lon=.." 片段。
-app.get("/api/parse", async (c) => {
-  const raw = c.req.query("u") || "";
-  const cs = (c.req.query("cs") || "").toLowerCase();
-  const fmt = (c.req.query("format") || "").toLowerCase();
-  try {
-    let { lat, lon, name, src } = await parseCoords(raw);
-    const needConv = cs === "gcj" || (cs !== "none" && (src === "amap" || src === "apple"));
-    if (needConv) ({ lat, lon } = gcj02ToWgs84(lat, lon));
-    lat = round6(lat);
-    lon = round6(lon);
-    name = name || "";
-    c.header("Access-Control-Allow-Origin", "*");
-    if (fmt === "json") return c.json({ lat, lon, name });
-    return c.text(`lat=${lat}&lon=${lon}`);
-  } catch (e) {
-    c.header("Access-Control-Allow-Origin", "*");
-    return c.json({ error: String(e && e.message ? e.message : e) }, 422);
+export default {
+  async fetch(request) {
+    const url = new URL(request.url);
+    if (request.method === "OPTIONS") return new Response(null,{status:204,headers:API_HEADERS});
+    if (request.method !== "GET") return new Response("Method not allowed",{status:405,headers:{Allow:"GET, OPTIONS"}});
+    if (url.pathname === "/") return new Response(getPageHtml(),{headers:{"Content-Type":"text/html; charset=utf-8","Cache-Control":"no-cache"}});
+    if (url.pathname === "/health") return new Response(JSON.stringify({service:"wloc",version:2}),{headers:API_HEADERS});
+    if (url.pathname !== "/api/parse") return new Response("Not found",{status:404});
+    try {
+      const result = normalizeCoords(await parseCoords(url.searchParams.get("u") || ""),url.searchParams.get("cs") || "auto");
+      if (url.searchParams.get("format") === "json") return new Response(JSON.stringify({lat:result.lat,lon:result.lon,name:result.name}),{headers:API_HEADERS});
+      return new Response(`lat=${result.lat}&lon=${result.lon}`,{headers:{...API_HEADERS,"Content-Type":"text/plain; charset=utf-8"}});
+    } catch (error) {
+      return new Response(JSON.stringify({error:error.message || "解析失败"}),{status:422,headers:API_HEADERS});
+    }
   }
-});
-
-app.onError((e, c) => {
-  console.error(`${e}`);
-  return c.text(`${e}`, 500);
-});
-
-export default app;
+};

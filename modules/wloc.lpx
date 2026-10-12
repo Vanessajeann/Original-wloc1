@@ -1,8 +1,8 @@
 #!name=Apple WLOC 定位修改
-#!desc=修改 Apple 网络定位返回坐标 | samni728 独立维护版 | 选点页面请使用自部署 Worker
-#!icon=https://raw.githubusercontent.com/samni728/wloc/refs/heads/main/wloc.jpg
-#!author=samni728
-#!homepage=https://github.com/samni728/wloc
+#!desc=修改 Apple 网络定位返回坐标 | Vanessajeann 维护版 | 安装和选点入口见项目主页
+#!icon=https://raw.githubusercontent.com/Vanessajeann/Original-wloc1/refs/heads/main/wloc.jpg
+#!author=Vanessajeann (based on samni728/wloc)
+#!homepage=https://github.com/Vanessajeann/Original-wloc1
 
 [Argument]
 longitude = input, "113.94114", tag=经度(在线选点优先)
@@ -11,8 +11,8 @@ accuracy = input, "25", tag=精度(米)
 logLevel = select, "info", "off", "error", "warn", "debug", "all", tag=日志级别
 
 [Script]
-http-response ^https?:\/\/gs-loc(-cn)?\.apple\.com\/clls\/wloc script-path=https://raw.githubusercontent.com/samni728/wloc/refs/heads/main/dist/wloc.js, requires-body=true, binary-body-mode=true, timeout=30, tag=Apple WLOC, argument=[{longitude},{latitude},{accuracy},{logLevel}]
-http-request ^https?:\/\/gs-loc(-cn)?\.apple\.com\/wloc-settings\/save script-path=https://raw.githubusercontent.com/samni728/wloc/refs/heads/main/dist/wloc-settings.js, timeout=10, tag=WLOC Settings
+http-response ^https?:\/\/gs-loc(-cn)?\.apple\.com\/clls\/wloc script-path=https://raw.githubusercontent.com/Vanessajeann/Original-wloc1/refs/heads/main/dist/wloc.js, requires-body=true, binary-body-mode=true, timeout=30, tag=Apple WLOC, argument={longitude,latitude,accuracy,logLevel}
+http-request ^https?:\/\/gs-loc(-cn)?\.apple\.com\/wloc-settings\/save script-path=https://raw.githubusercontent.com/Vanessajeann/Original-wloc1/refs/heads/main/dist/wloc-settings.js, timeout=10, tag=WLOC Settings
 
 [MITM]
 hostname = gs-loc.apple.com, gs-loc-cn.apple.com

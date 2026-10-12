@@ -1,8 +1,8 @@
 name: Apple WLOC 定位修改
-desc: "修改 Apple 网络定位返回坐标 | samni728 独立维护版 | 选点页面请使用自部署 Worker"
-author: samni728
-homepage: https://github.com/samni728/wloc
-icon: https://raw.githubusercontent.com/samni728/wloc/refs/heads/main/wloc.jpg
+desc: "修改 Apple 网络定位返回坐标 | Vanessajeann 维护版 | 安装和选点入口见项目主页"
+author: Vanessajeann (based on samni728/wloc)
+homepage: https://github.com/Vanessajeann/Original-wloc1
+icon: https://raw.githubusercontent.com/Vanessajeann/Original-wloc1/refs/heads/main/wloc.jpg
 category: Tools
 
 http:
@@ -26,8 +26,8 @@ http:
 
 script-providers:
   WLOC.Location:
-    url: https://raw.githubusercontent.com/samni728/wloc/refs/heads/main/dist/wloc.js
+    url: https://raw.githubusercontent.com/Vanessajeann/Original-wloc1/refs/heads/main/dist/wloc.js
     interval: 86400
   WLOC.Settings:
-    url: https://raw.githubusercontent.com/samni728/wloc/refs/heads/main/dist/wloc-settings.js
+    url: https://raw.githubusercontent.com/Vanessajeann/Original-wloc1/refs/heads/main/dist/wloc-settings.js
     interval: 86400

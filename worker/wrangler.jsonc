@@ -1,6 +1,7 @@
 {
   "name": "wloc-spoofer",
   "main": "src/index.js",
-  "compatibility_date": "2024-01-01",
-  "compatibility_flags": ["nodejs_compat"]
+  "build": { "command": "node scripts/build.mjs" },
+  "preview_urls": true,
+  "compatibility_date": "2025-10-01"
 }
