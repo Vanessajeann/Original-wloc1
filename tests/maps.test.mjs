@@ -75,6 +75,11 @@ test('rendered webpage has valid script, backend parser and correct layer conver
   const html=getPageHtml();
   const scripts=[...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)].map(m=>m[1]).join('\n');
   new vm.Script(scripts);
+  const context=vm.createContext({});
+  vm.runInContext(scripts.slice(0,scripts.indexOf('const SAVE_API')),context);
+  const gcj=context.wgs84ToGcj02(31.2,121.4);
+  const restored=context.gcj02ToWgs84(gcj.lat,gcj.lon);
+  assert.ok(Math.abs(restored.lat-31.2)<1e-8 && Math.abs(restored.lon-121.4)<1e-8);
   assert.ok(scripts.includes('/api/parse?format=json'));
   assert.ok(scripts.includes('gcj02ToWgs84(newLat,newLon)'));
   assert.ok(html.includes('设备已保存坐标'));

@@ -14,4 +14,4 @@ jobs:
           node-version: '22'
       - run: node scripts/build.mjs
       - run: node --test tests/*.test.mjs
-      - run: git diff --exit-code -- dist worker/wloc-worker.js worker/dist/_worker.js
+      - run: git diff --exit-code -- dist worker/wloc-worker.js worker/dist/_worker.js worker/src/generated

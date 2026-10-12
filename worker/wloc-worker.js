@@ -58,9 +58,9 @@ function validateCoords(lat, lon) {
   if (typeof lat !== 'number' || typeof lon !== 'number' || !Number.isFinite(lat) || !Number.isFinite(lon) || Math.abs(lat)>90 || Math.abs(lon)>180) throw new Error('经纬度超出有效范围');
   return { lat, lon };
 }
-function getCoordinateHelpers() {
-  return 'const GCJ_A=6378245.0, GCJ_EE=0.00669342162296594323;\n' + [gcjOutOfChina,gcjDeltaLat,gcjDeltaLon,wgs84ToGcj02,gcj02ToWgs84].map(fn=>fn.toString()).join('\n');
-}
+
+// Generated from coords.js.
+const COORDINATE_SCRIPT = "const GCJ_A = 6378245.0;\nconst GCJ_EE = 0.00669342162296594323;\n\nfunction gcjOutOfChina(lng, la) {\n  return lng < 72.004 || lng > 137.8347 || la < 0.8293 || la > 55.8271;\n}\n\nfunction gcjDeltaLat(x, y) {\n  let r = -100.0 + 2.0 * x + 3.0 * y + 0.2 * y * y + 0.1 * x * y + 0.2 * Math.sqrt(Math.abs(x));\n  r += ((20.0 * Math.sin(6.0 * x * Math.PI) + 20.0 * Math.sin(2.0 * x * Math.PI)) * 2.0) / 3.0;\n  r += ((20.0 * Math.sin(y * Math.PI) + 40.0 * Math.sin((y / 3.0) * Math.PI)) * 2.0) / 3.0;\n  r += ((160.0 * Math.sin((y / 12.0) * Math.PI) + 320 * Math.sin((y * Math.PI) / 30.0)) * 2.0) / 3.0;\n  return r;\n}\n\nfunction gcjDeltaLon(x, y) {\n  let r = 300.0 + x + 2.0 * y + 0.1 * x * x + 0.1 * x * y + 0.1 * Math.sqrt(Math.abs(x));\n  r += ((20.0 * Math.sin(6.0 * x * Math.PI) + 20.0 * Math.sin(2.0 * x * Math.PI)) * 2.0) / 3.0;\n  r += ((20.0 * Math.sin(x * Math.PI) + 40.0 * Math.sin((x / 3.0) * Math.PI)) * 2.0) / 3.0;\n  r += ((150.0 * Math.sin((x / 12.0) * Math.PI) + 300.0 * Math.sin((x / 30.0) * Math.PI)) * 2.0) / 3.0;\n  return r;\n}\n\n// WGS84 -> GCJ-02 (正向偏移), 与高德/苹果中国所用偏移一致。\nfunction wgs84ToGcj02(lat, lon) {\n  if (gcjOutOfChina(lon, lat)) return { lat, lon };\n  let dLat = gcjDeltaLat(lon - 105.0, lat - 35.0);\n  let dLon = gcjDeltaLon(lon - 105.0, lat - 35.0);\n  const radLat = (lat / 180.0) * Math.PI;\n  let magic = Math.sin(radLat);\n  magic = 1 - GCJ_EE * magic * magic;\n  const sqrtMagic = Math.sqrt(magic);\n  dLat = (dLat * 180.0) / (((GCJ_A * (1 - GCJ_EE)) / (magic * sqrtMagic)) * Math.PI);\n  dLon = (dLon * 180.0) / ((GCJ_A / sqrtMagic) * Math.cos(radLat) * Math.PI);\n  return { lat: lat + dLat, lon: lon + dLon };\n}\n\n// GCJ-02 -> WGS84 (迭代反算, 亚米级)。\n// 单程反算在偏移梯度大的地区会残留 1~2m, 这里用不动点迭代收敛到 <0.1m,\n// 与高德自身的 WGS84->GCJ 逆运算严格对齐, 消除回看时的残差。\nfunction gcj02ToWgs84(lat, lon) {\n  if (gcjOutOfChina(lon, lat)) return { lat, lon };\n  let wgsLat = lat;\n  let wgsLon = lon;\n  for (let i = 0; i < 6; i++) {\n    const g = wgs84ToGcj02(wgsLat, wgsLon);\n    const errLat = g.lat - lat;\n    const errLon = g.lon - lon;\n    if (Math.abs(errLat) < 1e-9 && Math.abs(errLon) < 1e-9) break;\n    wgsLat -= errLat;\n    wgsLon -= errLon;\n  }\n  return { lat: wgsLat, lon: wgsLon };\n}\n\nfunction validateCoords(lat, lon) {\n  if (typeof lat !== 'number' || typeof lon !== 'number' || !Number.isFinite(lat) || !Number.isFinite(lon) || Math.abs(lat)>90 || Math.abs(lon)>180) throw new Error('经纬度超出有效范围');\n  return { lat, lon };\n}\n";
 
 
 const MAP_HOSTS = ["maps.apple.com", "maps.apple", "amap.com", "gaode.com", "maps.google.com", "www.google.com", "maps.google.cn", "www.google.cn", "maps.app.goo.gl", "goo.gl", "map.baidu.com"];
@@ -361,7 +361,7 @@ body { font-family:-apple-system,system-ui,"SF Pro","Helvetica Neue",sans-serif;
   </div>
 </div>
 <script>
-${getCoordinateHelpers()}
+${COORDINATE_SCRIPT}
 const SAVE_API = 'https://gs-loc.apple.com/wloc-settings/save';
 const FAV_KEY = 'wloc_favorites';
 let lat = 22.544577, lon = 113.94114;
@@ -564,8 +564,8 @@ async function save() {
     if (d.success) {
       activeLon = savedLon; activeLat = savedLat;
       btn.textContent = '\\u2713 已储存'; btn.className = 'btn btn-primary success';
-      document.getElementById('status').textContent = '\\u2713 已写入: ' + lon.toFixed(6) + ', ' + lat.toFixed(6) + ' \\u00b7 ' + new Date().toLocaleTimeString('zh-CN');
-      document.getElementById('activeValue').textContent = '经度 ' + lon.toFixed(6) + '  纬度 ' + lat.toFixed(6) + '  精度 25m';
+      document.getElementById('status').textContent = '\\u2713 已写入: ' + savedLon.toFixed(6) + ', ' + savedLat.toFixed(6) + ' \\u00b7 ' + new Date().toLocaleTimeString('zh-CN');
+      document.getElementById('activeValue').textContent = '经度 ' + savedLon.toFixed(6) + '  纬度 ' + savedLat.toFixed(6) + '  精度 25m';
       renderFavs();
       toast('\\u2713 坐标已写入设备，请在地图中验证');
       setTimeout(() => { btn.textContent='储存到设备'; btn.className='btn btn-primary'; btn.disabled=false; }, 2500);

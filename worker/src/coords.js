@@ -57,6 +57,3 @@ export function validateCoords(lat, lon) {
   if (typeof lat !== 'number' || typeof lon !== 'number' || !Number.isFinite(lat) || !Number.isFinite(lon) || Math.abs(lat)>90 || Math.abs(lon)>180) throw new Error('经纬度超出有效范围');
   return { lat, lon };
 }
-export function getCoordinateHelpers() {
-  return 'const GCJ_A=6378245.0, GCJ_EE=0.00669342162296594323;\n' + [gcjOutOfChina,gcjDeltaLat,gcjDeltaLon,wgs84ToGcj02,gcj02ToWgs84].map(fn=>fn.toString()).join('\n');
-}

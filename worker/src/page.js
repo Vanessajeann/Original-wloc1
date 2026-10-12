@@ -1,4 +1,4 @@
-import { getCoordinateHelpers } from "./coords.js";
+import { COORDINATE_SCRIPT } from "./generated/coordinates.js";
 
 export function getPageHtml() {
   return `<!DOCTYPE html>
@@ -151,7 +151,7 @@ body { font-family:-apple-system,system-ui,"SF Pro","Helvetica Neue",sans-serif;
   </div>
 </div>
 <script>
-${getCoordinateHelpers()}
+${COORDINATE_SCRIPT}
 const SAVE_API = 'https://gs-loc.apple.com/wloc-settings/save';
 const FAV_KEY = 'wloc_favorites';
 let lat = 22.544577, lon = 113.94114;
@@ -354,8 +354,8 @@ async function save() {
     if (d.success) {
       activeLon = savedLon; activeLat = savedLat;
       btn.textContent = '\\u2713 已储存'; btn.className = 'btn btn-primary success';
-      document.getElementById('status').textContent = '\\u2713 已写入: ' + lon.toFixed(6) + ', ' + lat.toFixed(6) + ' \\u00b7 ' + new Date().toLocaleTimeString('zh-CN');
-      document.getElementById('activeValue').textContent = '经度 ' + lon.toFixed(6) + '  纬度 ' + lat.toFixed(6) + '  精度 25m';
+      document.getElementById('status').textContent = '\\u2713 已写入: ' + savedLon.toFixed(6) + ', ' + savedLat.toFixed(6) + ' \\u00b7 ' + new Date().toLocaleTimeString('zh-CN');
+      document.getElementById('activeValue').textContent = '经度 ' + savedLon.toFixed(6) + '  纬度 ' + savedLat.toFixed(6) + '  精度 25m';
       renderFavs();
       toast('\\u2713 坐标已写入设备，请在地图中验证');
       setTimeout(() => { btn.textContent='储存到设备'; btn.className='btn btn-primary'; btn.disabled=false; }, 2500);
