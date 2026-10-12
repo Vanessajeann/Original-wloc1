@@ -1,3 +1,5 @@
+import { getCoordinateHelpers } from "./coords.js";
+
 export function getPageHtml() {
   return `<!DOCTYPE html>
 <html lang="zh-CN">
@@ -79,6 +81,11 @@ body { font-family:-apple-system,system-ui,"SF Pro","Helvetica Neue",sans-serif;
 </div>
 </div>
 <div class="panel">
+  <div class="card">
+    <h3>开始使用</h3>
+    <p style="font-size:13px;line-height:1.7">先安装并启用代理模块，开启 MITM 并信任证书，再选择位置保存。</p>
+    <p style="font-size:13px;margin-top:8px"><a href="https://github.com/Vanessajeann/Original-wloc1#快速开始" target="_blank" rel="noopener">安装模块和使用说明</a> · <a href="https://github.com/Vanessajeann/Original-wloc1/issues" target="_blank" rel="noopener">反馈问题</a></p>
+  </div>
   <div class="error-banner" id="errorBanner">
     <b>模块未生效</b>
     请检查以下配置：<br>
@@ -104,23 +111,23 @@ body { font-family:-apple-system,system-ui,"SF Pro","Helvetica Neue",sans-serif;
     <div id="favList" class="fav-list"></div>
   </div>
   <div class="card">
-    <h3>当前生效坐标</h3>
+    <h3>设备已保存坐标</h3>
     <div class="active-loc" id="activeLoc">
-      <div class="label">设备持久化数据 (wloc_settings)</div>
+      <div class="label">由当前代理工具保存，系统是否采用需另行验证</div>
       <div class="value" id="activeValue">查询中...</div>
     </div>
     <div class="row">
       <button class="btn btn-sm btn-secondary" onclick="queryActive()">刷新</button>
-      <button class="btn btn-sm btn-danger" onclick="clearActive()">清除数据</button>
+      <button class="btn btn-sm btn-danger" onclick="clearActive()">恢复真实定位</button>
     </div>
   </div>
   <div class="card">
     <h3>粘贴地图链接</h3>
     <div class="input-row">
-      <input id="urlInput" placeholder="Apple/Google/高德地图链接 或 经纬度" />
+      <input id="urlInput" placeholder="地图分享链接 或 纬度,经度" />
       <button class="btn btn-secondary" style="flex:none;min-width:56px" onclick="parseUrl()">解析</button>
     </div>
-    <div style="font-size:11px;color:var(--gray);margin-top:6px">支持 Apple Maps · Google Maps · 高德 · 百度 · 坐标文本</div>
+    <div style="font-size:11px;color:var(--gray);margin-top:6px">支持带坐标的苹果、Google、高德链接及百度 location 链接；短链由服务解析，无法解析时请输入纬度,经度</div>
   </div>
   <div class="card">
     <h3>搜索地点</h3>
@@ -144,6 +151,7 @@ body { font-family:-apple-system,system-ui,"SF Pro","Helvetica Neue",sans-serif;
   </div>
 </div>
 <script>
+${getCoordinateHelpers()}
 const SAVE_API = 'https://gs-loc.apple.com/wloc-settings/save';
 const FAV_KEY = 'wloc_favorites';
 let lat = 22.544577, lon = 113.94114;
@@ -159,28 +167,46 @@ const tiles = {
   amap: L.tileLayer('https://webst0{s}.is.autonavi.com/appmaptile?style=6&x={x}&y={y}&z={z}', {maxZoom:18, subdomains:'1234', attribution:'\\u00a9 高德'}),
   voyager: L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {maxZoom:19, attribution:'\\u00a9 Carto'})
 };
+let currentLayerName = 'satellite';
 let currentLayer = tiles.satellite;
 currentLayer.addTo(map);
+function displayCoords(newLat, newLon) {
+  return currentLayerName === 'amap' ? wgs84ToGcj02(newLat,newLon) : {lat:newLat,lon:newLon};
+}
 function switchLayer(name) {
+  const center = map.getCenter();
+  const wgsCenter = currentLayerName === 'amap' ? gcj02ToWgs84(center.lat,center.lng) : {lat:center.lat,lon:center.lng};
   map.removeLayer(currentLayer);
+  currentLayerName = name;
   currentLayer = tiles[name];
   currentLayer.addTo(map);
+  const target=displayCoords(wgsCenter.lat,wgsCenter.lon);
+  map.setView([target.lat,target.lon],map.getZoom());
+  const point=displayCoords(lat,lon);
+  marker.setLatLng([point.lat,point.lon]);
   document.querySelectorAll('.layer-btn').forEach(b => b.classList.toggle('active', b.dataset.layer === name));
 }
 let marker = L.marker([lat, lon], {draggable:true}).addTo(map);
 
-marker.on('dragend', e => { const p=e.target.getLatLng(); setPos(p.lat, p.lng); });
-map.on('click', e => { setPos(e.latlng.lat, e.latlng.lng); });
+function setMapPos(newLat,newLon) {
+  const point=currentLayerName === 'amap' ? gcj02ToWgs84(newLat,newLon) : {lat:newLat,lon:newLon};
+  setPos(point.lat,point.lon);
+}
+marker.on('dragend', e => { const p=e.target.getLatLng(); setMapPos(p.lat, p.lng); });
+map.on('click', e => { setMapPos(e.latlng.lat, e.latlng.lng); });
 
 function setPos(newLat, newLon) {
+  if (!Number.isFinite(newLat) || !Number.isFinite(newLon) || Math.abs(newLat)>90 || Math.abs(newLon)>180) throw new Error('无效经纬度');
   lat = newLat; lon = newLon; selected = true;
-  marker.setLatLng([lat, lon]);
-  document.getElementById('coords').textContent = '经度 ' + lon.toFixed(6) + '  纬度 ' + lat.toFixed(6);
+  const point=displayCoords(lat,lon);
+  marker.setLatLng([point.lat,point.lon]);
+  document.getElementById('coords').textContent = '经度 ' + lon.toFixed(6) + '  纬度 ' + lat.toFixed(6) + '（WGS84）';
 }
 
 function moveTo(newLat, newLon, zoom) {
   setPos(newLat, newLon);
-  map.setView([lat, lon], zoom || 15);
+  const point=displayCoords(lat,lon);
+  map.setView([point.lat,point.lon], zoom || 15);
 }
 
 function toast(msg, ms) {
@@ -195,7 +221,7 @@ function showError(show) {
 
 /* ---- Favorites (localStorage) ---- */
 function getFavs() {
-  try { return JSON.parse(localStorage.getItem(FAV_KEY)) || []; } catch(e) { return []; }
+  try { const items=JSON.parse(localStorage.getItem(FAV_KEY)); return Array.isArray(items) ? items.filter(f=>typeof f.name==='string' && Number.isFinite(f.lat) && Number.isFinite(f.lon) && Math.abs(f.lat)<=90 && Math.abs(f.lon)<=180) : []; } catch(e) { return []; }
 }
 function saveFavs(favs) {
   localStorage.setItem(FAV_KEY, JSON.stringify(favs));
@@ -216,7 +242,7 @@ function renderFavs() {
       '<div class="fav-info">' +
         '<div class="fav-name">' + escHtml(f.name) + '<\\/div>' +
         '<div class="fav-coords">' + f.lon.toFixed(6) + ', ' + f.lat.toFixed(6) + '<\\/div>' +
-        (isActive ? '<div class="fav-active">\\u2713 当前生效<\\/div>' : '') +
+        (isActive ? '<div class="fav-active">\\u2713 设备已保存<\\/div>' : '') +
       '<\\/div>' +
       '<button class="fav-del" onclick="event.stopPropagation();delFav(' + i + ')" title="删除">\\u00d7<\\/button>' +
     '<\\/div>';
@@ -281,14 +307,15 @@ function queryActive() {
   fetch(SAVE_API + '?action=query', { method:'GET', mode:'cors', cache:'no-store' })
     .then(r => r.json())
     .then(d => {
-      if (d.success && d.longitude && d.latitude) {
+      if (!d.success) throw new Error(d.error || '查询失败');
+      if (d.enabled !== false && Number.isFinite(d.longitude) && Number.isFinite(d.latitude)) {
         activeLon = parseFloat(d.longitude);
         activeLat = parseFloat(d.latitude);
         el.textContent = '经度 ' + activeLon.toFixed(6) + '  纬度 ' + activeLat.toFixed(6) + (d.accuracy ? '  精度 ' + d.accuracy + 'm' : '');
         renderFavs();
       } else {
         activeLon = null; activeLat = null;
-        el.textContent = '无已保存的坐标';
+        el.textContent = '定位覆盖已关闭或尚未保存位置';
         renderFavs();
       }
     })
@@ -298,15 +325,15 @@ function queryActive() {
 }
 
 function clearActive() {
-  if (!confirm('确定清除设备上已保存的坐标？清除后将使用模块默认参数或停止修改定位。')) return;
+  if (!confirm('恢复真实定位并关闭定位覆盖？系统已有缓存可能需要重新触发定位或重启设备。')) return;
   fetch(SAVE_API + '?action=clear', { method:'GET', mode:'cors', cache:'no-store' })
     .then(r => r.json())
     .then(d => {
       if (d.success) {
         activeLon = null; activeLat = null;
-        document.getElementById('activeValue').textContent = '已清除';
+        document.getElementById('activeValue').textContent = '定位覆盖已关闭';
         renderFavs();
-        toast('已清除设备坐标');
+        toast('定位覆盖已关闭；请在地图中验证');
       } else { toast('清除失败: ' + (d.error || ''), 3000); }
     })
     .catch(() => { toast('清除失败 - 请检查模块配置', 3000); });
@@ -315,21 +342,22 @@ function clearActive() {
 /* ---- Save to device ---- */
 async function save() {
   if (!selected) { toast('请先在地图上选择一个位置'); return; }
+  const savedLon=lon, savedLat=lat;
   const btn = document.getElementById('saveBtn');
   btn.textContent = '储存中...'; btn.disabled = true;
   showError(false);
   try {
-    const r = await fetch(SAVE_API + '?lon=' + lon + '&lat=' + lat + '&acc=25', {
+    const r = await fetch(SAVE_API + '?lon=' + savedLon + '&lat=' + savedLat + '&acc=25', {
       method: 'GET', mode: 'cors', cache: 'no-store'
     });
     const d = await r.json();
     if (d.success) {
-      activeLon = lon; activeLat = lat;
+      activeLon = savedLon; activeLat = savedLat;
       btn.textContent = '\\u2713 已储存'; btn.className = 'btn btn-primary success';
       document.getElementById('status').textContent = '\\u2713 已写入: ' + lon.toFixed(6) + ', ' + lat.toFixed(6) + ' \\u00b7 ' + new Date().toLocaleTimeString('zh-CN');
       document.getElementById('activeValue').textContent = '经度 ' + lon.toFixed(6) + '  纬度 ' + lat.toFixed(6) + '  精度 25m';
       renderFavs();
-      toast('\\u2713 坐标已写入设备，下次定位生效');
+      toast('\\u2713 坐标已写入设备，请在地图中验证');
       setTimeout(() => { btn.textContent='储存到设备'; btn.className='btn btn-primary'; btn.disabled=false; }, 2500);
     } else {
       throw new Error(d.error || '写入失败');
@@ -351,33 +379,17 @@ function locateMe() {
   );
 }
 
-function parseMapUrl(text) {
-  let m;
-  m = text.match(/ll=([0-9.-]+),([0-9.-]+)/);
-  if (m) return { lat: parseFloat(m[1]), lon: parseFloat(m[2]) };
-  m = text.match(/@([0-9.-]+),([0-9.-]+)/);
-  if (m) return { lat: parseFloat(m[1]), lon: parseFloat(m[2]) };
-  m = text.match(/lnglat=([0-9.-]+),([0-9.-]+)/);
-  if (m) return { lat: parseFloat(m[2]), lon: parseFloat(m[1]) };
-  m = text.match(/(?:location|center)=([0-9.-]+),([0-9.-]+)/);
-  if (m) return { lat: parseFloat(m[2]), lon: parseFloat(m[1]) };
-  m = text.match(/([0-9]+\\.[0-9]+)[,\\s]+([0-9]+\\.[0-9]+)/);
-  if (m) {
-    const a = parseFloat(m[1]), b = parseFloat(m[2]);
-    if (a < 90 && b > 90) return { lat: a, lon: b };
-    if (b < 90 && a > 90) return { lat: b, lon: a };
-    return { lat: a, lon: b };
-  }
-  return null;
-}
-
-function parseUrl() {
+async function parseUrl() {
   const input = document.getElementById('urlInput').value.trim();
-  if (!input) return toast('请粘贴地图链接或坐标');
-  const result = parseMapUrl(input);
-  if (!result) { toast('无法解析坐标，请检查链接格式', 3000); return; }
-  moveTo(result.lat, result.lon, 15);
-  toast('已解析: ' + result.lon.toFixed(4) + ', ' + result.lat.toFixed(4));
+  if (!input) return toast('请粘贴地图链接或纬度,经度');
+  toast('解析中...');
+  try {
+    const response=await fetch('/api/parse?format=json&u='+encodeURIComponent(input),{cache:'no-store'});
+    const result=await response.json();
+    if (!response.ok || result.error) throw new Error(result.error || '解析失败');
+    moveTo(result.lat,result.lon,15);
+    toast('已解析: '+result.lon.toFixed(6)+', '+result.lat.toFixed(6));
+  } catch(error) { toast(error.message || '解析失败',4000); }
 }
 
 async function searchPlace() {
@@ -385,12 +397,14 @@ async function searchPlace() {
   if (!q) return toast('请输入地名');
   toast('搜索中...');
   try {
-    const r = await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q='+encodeURIComponent(q));
-    const results = await r.json();
+    const r = await fetch('https://photon.komoot.io/api/?limit=1&q='+encodeURIComponent(q));
+    if (!r.ok) throw new Error('搜索服务不可用');
+    const data = await r.json();
+    const results = data.features || [];
     if (!results.length) { toast('未找到: ' + q, 3000); return; }
     const p = results[0];
-    moveTo(parseFloat(p.lat), parseFloat(p.lon), 15);
-    toast(p.display_name.slice(0, 40));
+    moveTo(Number(p.geometry.coordinates[1]), Number(p.geometry.coordinates[0]), 15);
+    toast(String(p.properties.name || q).slice(0,40));
   } catch(e) { toast('搜索失败', 3000); }
 }
 
